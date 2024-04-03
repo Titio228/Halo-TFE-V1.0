@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  keycloak:
+    container_name: Keycloack
+    build: ./Keycloak
+    ports:
+      - 8080:8080
+    command: 
+      - start-dev 
+      - --import-realm
+    volumes:
+      - ./Keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+      - ./Keycloak/hl-theme:/opt/keycloak/themes/hl-theme
+      - ./Keycloak/register-event-listener/RegisterEventListener.jar:/opt/keycloak/providers/RegisterEventListener.jar
+    
+  

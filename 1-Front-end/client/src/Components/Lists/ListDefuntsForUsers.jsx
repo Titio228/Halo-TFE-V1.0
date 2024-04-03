@@ -1,0 +1,190 @@
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { format } from "date-fns";
+import { SortListUsers, SortListUsersByCriteria } from "../Functions/SortList";
+import { SearchDefunt } from "../Functions/SearchItems";
+import ReactPaginate from "react-paginate";
+import dataTest from "../../../DataTest/dataTestDefunt";
+import "./CSS/style.css";
+
+export default function ListDefunts() {
+  const [selectedPerson, setSelectedPerson] = useState(null);
+  const [refresh, setRefresh] = useState(false);
+  const [ascendant, setAscendant] = useState(false);
+  const [catergory, setCatergory] = useState(null);
+  const [currentPage, setCurrentPage] = useState(0);
+  const usersPerPage = 15;
+  const [data, setData] = useState(dataTest);
+  const [selectedPersonBySearch, setSelectedPersonBySearch] = useState(data);
+
+  //Rechercher un utilisateur
+  const handleSearchItems = (e) => {
+    if (e.target.value === "") {
+      setRefresh(true);
+    } else {
+      setCurrentPage(0);
+      setSelectedPersonBySearch(SearchDefunt(e.target.value, data));
+    }
+  };
+
+  const handleClick = (key) => {
+    setCatergory(key);
+    setAscendant(!ascendant);
+    setSelectedPersonBySearch(SortListUsersByCriteria(data, ascendant, key));
+  };
+
+  // Fonction pour récupérer les utilisateurs de la page actuelle
+  const getCurrentUsers = () => {
+    const startIndex = currentPage * usersPerPage;
+    const endIndex = startIndex + usersPerPage;
+    return selectedPersonBySearch.slice(startIndex, endIndex);
+  };
+
+  // Fonction appelée lorsque l'utilisateur change de page
+  const handlePageChange = (selectedPage) => {
+    setCurrentPage(selectedPage.selected);
+  };
+
+  useEffect(() => {
+    try {
+      setSelectedPersonBySearch(SortListUsers(data));
+      setRefresh(false); //Trie sur le nom
+    } catch (error) {
+      console.log("Error with axios: ", error);
+    }
+  }, [refresh]);
+
+  return (
+    <div className="overflow-x-auto w-11/12 m-auto">
+      <div className="flex justify-between items-center">
+        <div className="flex my-4">
+          <h1 className="font-bold mr-4">Liste des défunts</h1>
+        </div>
+        <div>
+          <input
+            type="text"
+            placeholder="Search"
+            className="w-full text-center rounded-xl bg-gray-400 placeholder:text-gray-800 outline-none p-1 text-white"
+            onChange={handleSearchItems}
+          />
+        </div>
+      </div>
+      <table className="table">
+        {/* head */}
+        <thead>
+          <tr>
+            <th
+              onClick={(e) => handleClick("lastName")}
+              className={
+                ascendant && catergory === "lastName"
+                  ? "font-bold text-orange-500 cursor-pointer"
+                  : "cursor-pointer"
+              }
+            >
+              Nom{" "}
+              <i
+                className={
+                  ascendant
+                    ? "fa-solid fa-arrow-down-z-a ml-2"
+                    : "fa-solid fa-arrow-down-a-z ml-2"
+                }
+              ></i>
+            </th>
+            <th
+              onClick={(e) => handleClick("firstName")}
+              className={
+                ascendant && catergory === "firstName"
+                  ? "font-bold text-orange-500 cursor-pointer"
+                  : "cursor-pointer"
+              }
+            >
+              Prénom{" "}
+              <i
+                className={
+                  ascendant
+                    ? "fa-solid fa-arrow-down-z-a ml-2"
+                    : "fa-solid fa-arrow-down-a-z ml-2"
+                }
+              ></i>
+            </th>
+            <th
+              onClick={(e) => handleClick("dateOfBirth")}
+              className={
+                ascendant && catergory === "dateOfBirth"
+                  ? "font-bold text-orange-500 cursor-pointer"
+                  : "cursor-pointer"
+              }
+            >
+              Date de naissance
+              <i
+                className={
+                  ascendant
+                    ? "fa-solid fa-arrow-down-9-1 ml-2"
+                    : "fa-solid fa-arrow-down-1-9 ml-2"
+                }
+              ></i>
+            </th>
+            <th
+              onClick={(e) => handleClick("dateOfDead")}
+              className={
+                ascendant && catergory === "dateOfDead"
+                  ? "font-bold text-orange-500 cursor-pointer"
+                  : "cursor-pointer"
+              }
+            >
+              Date de décès
+              <i
+                className={
+                  ascendant
+                    ? "fa-solid fa-arrow-down-9-1 ml-2"
+                    : "fa-solid fa-arrow-down-1-9 ml-2"
+                }
+              ></i>
+            </th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {getCurrentUsers() &&
+            getCurrentUsers().map((person) => (
+              <tr key={person.id}>
+                <td>
+                  <div className="font-bold">{person.lastName}</div>
+                </td>
+                <td>{person.firstName}</td>
+                <td>{format(person.dateOfBirth, "dd-MM-yyyy")}</td>
+                <td>{format(person.dateOfDead, "dd-MM-yyyy")}</td>
+                <td>
+                  <Link
+                    to={`/user/defuntselected/${person.id}`}
+                    className="btn btn-ghost btn-xs"
+                  >
+                    details
+                  </Link>
+                </td>
+              </tr>
+            ))}
+        </tbody>
+        {/* foot */}
+        <tfoot>
+          <tr>
+            <th>Nom</th>
+            <th>Prénom</th>
+            <th>Date de naissance</th>
+            <th>Date de décès</th>
+            <th></th>
+          </tr>
+        </tfoot>
+      </table>
+      <ReactPaginate
+        pageCount={Math.ceil(selectedPersonBySearch.length / usersPerPage)} // Calculer le nombre total de pages
+        pageRangeDisplayed={3}
+        marginPagesDisplayed={1}
+        onPageChange={handlePageChange}
+        containerClassName={"pagination"}
+        activeClassName={"active"}
+        className="m-auto w-1/2 flex justify-evenly items-center mt-5"
+      />
+    </div>
+  );
+}
